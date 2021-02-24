@@ -1,0 +1,17 @@
+{
+  "name": "point-explorer",
+  "version": "1.0.0",
+  "description": "A C++ application to explore some properties of points in Point Cloud images",
+  "main": "",
+  "scripts": {
+    "install": "cmake-js compile"
+  },
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://github.com/MarcusVLMA/point-explorer#readme",
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "cmake-js": "^6.1.0",
+    "nan": "^2.14.2"
+  }
+}
