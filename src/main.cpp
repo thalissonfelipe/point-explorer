@@ -4,8 +4,11 @@
 #include <string.h>
 #include <fstream>
 #include <chrono>
+#include <experimental/filesystem>
 
-#include <nan.h>
+#include "../include/Anisotropy.h"
+
+namespace fs = std::experimental::filesystem;
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/conversions.h>
@@ -178,7 +181,9 @@ PointAnalysis getPointAnalysis(pcl::PointXYZ point, CloudXYZ::Ptr &inputCloud, C
 
   if (index == -1)
   {
-    throw std::runtime_error("Could not find provided point for analysis after NaN filters. Maybe you selected a NaN point or a nonexistent index.");
+    struct PointAnalysis pointAnalysis;
+    pointAnalysis.shapeIndex = -10;
+    return pointAnalysis;
   }
 
   pcl::Normal normal = normalCloud->points[index];
@@ -190,100 +195,286 @@ PointAnalysis getPointAnalysis(pcl::PointXYZ point, CloudXYZ::Ptr &inputCloud, C
   return pa;
 }
 
-NAN_METHOD(GetPointAnalysis)
+const float EPSILON = std::numeric_limits<double>::epsilon();
+
+void printPoint(pcl::PointXYZ point)
 {
-  try
-  {
-    std::string filename(*Nan::Utf8String(info[0]));
-    std::string computationMethod(*Nan::Utf8String(info[1]));
-    int computationSize = info[2]->NumberValue();
-    int pointIndexToAnalyze = info[3]->NumberValue();
-
-    CloudXYZ::Ptr cloud(new CloudXYZ);
-
-    if (pcl::io::loadPCDFile(filename, *cloud) == -1)
-    {
-      throw std::runtime_error("Couldn't read PCD file");
-    }
-
-    pcl::PointXYZ pointToAnalyze = cloud->points[pointIndexToAnalyze];
-
-    CloudXYZ::Ptr filteredCloud(new CloudXYZ);
-
-    //Removing NaNs
-    std::vector<int> indices;
-    pcl::removeNaNFromPointCloud(*cloud, *filteredCloud, indices);
-
-    CloudNormal::Ptr normalCloud(new CloudNormal);
-    normalComputation(filteredCloud, computationMethod, computationSize, normalCloud);
-
-    CloudNormal::Ptr filteredNormalCloud(new CloudNormal);
-
-    //We will not use 'indices' vector, clearing it to re-use the variable.
-    indices.clear();
-    pcl::removeNaNNormalsFromPointCloud(*normalCloud, *filteredNormalCloud, indices);
-
-    /*
-    * After removing NaNs from Normal Cloud, maybe the size of the XYZ Cloud isn't the same size of Normal Cloud,
-    * so we keep in the XYZ Cloud only the indices which are present in Normal Cloud.
-    */
-    removeNonExistingIndices(filteredCloud, indices);
-
-    CloudPC::Ptr principalCurvaturesCloud(new CloudPC);
-    principalCurvaturesComputation(filteredCloud, filteredNormalCloud, computationMethod, computationSize, principalCurvaturesCloud);
-
-    std::vector<int> notNaNIndicesOfShapeIndexes;
-    std::vector<float> shapeIndexes;
-    shapeIndexComputation(principalCurvaturesCloud, shapeIndexes, notNaNIndicesOfShapeIndexes);
-    if (notNaNIndicesOfShapeIndexes.size() != filteredCloud->points.size() || notNaNIndicesOfShapeIndexes.size() != principalCurvaturesCloud->points.size())
-    {
-      removeNonExistingIndices(filteredCloud, notNaNIndicesOfShapeIndexes);
-      removeNonExistingIndices(principalCurvaturesCloud, notNaNIndicesOfShapeIndexes);
-    }
-
-    v8::Local<v8::Object> moduleResponse = Nan::New<v8::Object>();
-
-    struct PointAnalysis pointAnalysis = getPointAnalysis(pointToAnalyze, filteredCloud, filteredNormalCloud, principalCurvaturesCloud, shapeIndexes);
-    v8::Local<v8::Object> normalV8Object = Nan::New<v8::Object>();
-    normalV8Object->Set(Nan::New("x").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.normal.normal_x));
-    normalV8Object->Set(Nan::New("y").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.normal.normal_y));
-    normalV8Object->Set(Nan::New("z").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.normal.normal_z));
-
-    v8::Local<v8::Object> principalCurvaturesV8Object = Nan::New<v8::Object>();
-    principalCurvaturesV8Object->Set(Nan::New("k1").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.principalCurvatures.pc1));
-    principalCurvaturesV8Object->Set(Nan::New("k2").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.principalCurvatures.pc2));
-
-    v8::Local<v8::Object> pointAnalysisV8Object = Nan::New<v8::Object>();
-    pointAnalysisV8Object->Set(Nan::New("normal").ToLocalChecked(), normalV8Object);
-    pointAnalysisV8Object->Set(Nan::New("principal_curvatures").ToLocalChecked(), principalCurvaturesV8Object);
-    pointAnalysisV8Object->Set(Nan::New("gaussian_curvature").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.gaussianCurvature));
-    pointAnalysisV8Object->Set(Nan::New("shape_index").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.shapeIndex));
-
-    moduleResponse->Set(Nan::New("point_analysis").ToLocalChecked(), pointAnalysisV8Object);
-
-    info.GetReturnValue().Set(moduleResponse);
-  }
-  catch (std::exception &e)
-  {
-    v8::Isolate *isolate = v8::Isolate::GetCurrent();
-    isolate->ThrowException(v8::String::NewFromUtf8(isolate, e.what()));
-  }
+  std::cout << "X: " << point.x << " Y: " << point.y << " Z: " << point.z << std::endl;
 }
 
-using Nan::GetFunction;
-using Nan::New;
-using Nan::Set;
-using v8::Boolean;
-using v8::FunctionTemplate;
-using v8::Handle;
-using v8::Number;
-using v8::Object;
-using v8::String;
-
-NAN_MODULE_INIT(init)
+bool areEqual(double a, double b)
 {
-  Set(target, New<String>("getPointAnalysis").ToLocalChecked(),
-      GetFunction(New<FunctionTemplate>(GetPointAnalysis)).ToLocalChecked());
+    return fabs(a - b) < EPSILON;
 }
 
-NODE_MODULE(point_analysis, init)
+bool has_suffix(const std::string &str, const std::string &suffix)
+{
+    return str.size() >= suffix.size() &&
+           str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+PointAnalysis process(CloudXYZ::Ptr &cloud, pcl::PointXYZ point, std::string method, float methodValue)
+{
+  CloudXYZ::Ptr filteredCloud(new CloudXYZ);
+  
+  // Removing NaNs
+  std::vector<int> indices;
+  pcl::removeNaNFromPointCloud(*cloud, *filteredCloud, indices);
+
+  CloudNormal::Ptr normalCloud(new CloudNormal);
+  normalComputation(filteredCloud, method, methodValue, normalCloud);
+
+  CloudNormal::Ptr filteredNormalCloud(new CloudNormal);
+
+  // We will not use 'indices' vector, clearing it to re-use the variable.
+  indices.clear();
+  pcl::removeNaNNormalsFromPointCloud(*normalCloud, *filteredNormalCloud, indices);
+
+  /*
+  * After removing NaNs from Normal Cloud, maybe the size of the XYZ Cloud isn't the same size of Normal Cloud,
+  * so we keep in the XYZ Cloud only the indices which are present in Normal Cloud.
+  */
+  removeNonExistingIndices(filteredCloud, indices);
+
+  CloudPC::Ptr principalCurvaturesCloud(new CloudPC);
+  principalCurvaturesComputation(filteredCloud, filteredNormalCloud, method, methodValue, principalCurvaturesCloud);
+
+  std::vector<int> notNaNIndicesOfShapeIndexes;
+  std::vector<float> shapeIndexes;
+  shapeIndexComputation(principalCurvaturesCloud, shapeIndexes, notNaNIndicesOfShapeIndexes);
+  if (notNaNIndicesOfShapeIndexes.size() != filteredCloud->points.size() || notNaNIndicesOfShapeIndexes.size() != principalCurvaturesCloud->points.size())
+  {
+    removeNonExistingIndices(filteredCloud, notNaNIndicesOfShapeIndexes);
+    removeNonExistingIndices(principalCurvaturesCloud, notNaNIndicesOfShapeIndexes);
+  }
+
+  struct PointAnalysis pointAnalysis = getPointAnalysis(point, filteredCloud, filteredNormalCloud, principalCurvaturesCloud, shapeIndexes);
+
+  return pointAnalysis;
+}
+
+void extractShapeIndexAndGaussianCurvature() {
+  const int nFolders = 104;
+
+  std::ofstream myfile;
+  myfile.open("data2.txt");
+
+  myfile << "cloud,individuo,";
+  myfile << "radius_10_si,radius_10_cg,radius_11_si,radius_11_cf,radius_12_si,radius_12_cg,radius_13_si,radius_13_cg,radius_14_si,radius_14_cg,";
+  myfile << "k_100_si,k_100_cg,k_150_si,k_150_cg,k_200_si,k_200_cg,k_250_si,k_250_cg,k_300_si,k_300_cg" << std::endl;
+
+  for (int i = 0; i <= nFolders; i++)
+  {
+    std::ostringstream oss;
+    oss << std::setw(3) << std::setfill('0') << i;
+    std::string folder = "bs" + oss.str();
+
+    std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/" + folder;
+    std::string originalCloudsFolder = "/media/thalisson/Seagate Expansion Drive/BD Faces/Bosphorus_Original_PCD/" + folder + "/";
+
+    std::cout << "Folder [" << folder << "]" << std::endl;
+
+    for (const auto & entry : fs::directory_iterator(landmarksPath))
+    {
+      std::string filename = entry.path();
+      std::string originalFilename = fs::path(filename).filename();
+      std::string originalCloudPath = originalCloudsFolder + originalFilename;
+
+      if (has_suffix(filename, ".pcd"))
+      {
+        myfile << originalFilename << "," << i;
+
+        CloudXYZ::Ptr cloud(new CloudXYZ);
+        if (pcl::io::loadPCDFile(filename, *cloud) == -1)
+        {
+          myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+          continue;
+        }
+
+        CloudXYZ::Ptr originalCloud(new CloudXYZ);
+
+        if (pcl::io::loadPCDFile(originalCloudPath, *originalCloud) == -1)
+        {
+          myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+          continue;
+        }
+
+        // radius
+        bool canContinue = true;
+        for (int j = 10; j <= 14; j++) {
+          struct PointAnalysis pa = process(originalCloud, cloud->points[0], "radius", j);
+
+          if (pa.shapeIndex != -10)
+          {
+            myfile << "," << pa.shapeIndex << "," << pa.gaussianCurvature;
+          } else {
+            // point not found
+            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
+            canContinue = false;
+            break;
+          }
+        }
+
+        // neighbors
+        if (canContinue)
+        {
+          for (int k = 100; k <= 300; k+=50) {
+            struct PointAnalysis pa = process(originalCloud, cloud->points[0], "k", k);
+            myfile << "," << pa.shapeIndex << "," << pa.gaussianCurvature;
+          }
+        }
+
+        myfile << std::endl;
+      }
+    }
+  }
+
+  myfile.close();
+}
+
+void extractAnisotropy() {
+  const int nFolders = 104;
+
+  std::ofstream myfile;
+  myfile.open("anisotropy_k_neighbors.txt");
+  // myfile.open("anisotropy_radius.txt");
+
+  myfile << "cloud,";
+  // K neighbors
+  myfile << "gf01_k_100,gf02_k_100,gf03_k_100,gf04_k_100,gf05_k_100,gf06_k_100,gf07_k_100,gf08_k_100,gf09_k_100,";
+  myfile << "gf01_k_150,gf02_k_150,gf03_k_150,gf04_k_150,gf05_k_150,gf06_k_150,gf07_k_150,gf08_k_150,gf09_k_150,";
+  myfile << "gf01_k_200,gf02_k_200,gf03_k_200,gf04_k_200,gf05_k_200,gf06_k_200,gf07_k_200,gf08_k_200,gf09_k_200,";
+  myfile << "gf01_k_250,gf02_k_250,gf03_k_250,gf04_k_250,gf05_k_250,gf06_k_250,gf07_k_250,gf08_k_250,gf09_k_250,";
+  myfile << "gf01_k_300,gf02_k_300,gf03_k_300,gf04_k_300,gf05_k_300,gf06_k_300,gf07_k_300,gf08_k_300,gf09_k_300" << std::endl;
+  // Radius
+  // myfile << "gf01_r_10,gf02_r_10,gf03_r_10,gf04_r_10,gf05_r_10,gf06_r_10,gf07_r_10,gf08_r_10,gf09_r_10,";
+  // myfile << "gf01_r_11,gf02_r_11,gf03_r_11,gf04_r_11,gf05_r_11,gf06_r_11,gf07_r_11,gf08_r_11,gf09_r_11,";
+  // myfile << "gf01_r_12,gf02_r_12,gf03_r_12,gf04_r_12,gf05_r_12,gf06_r_12,gf07_r_12,gf08_r_12,gf09_r_12,";
+  // myfile << "gf01_r_13,gf02_r_13,gf03_r_13,gf04_r_13,gf05_r_13,gf06_r_13,gf07_r_13,gf08_r_13,gf09_r_13,";
+  // myfile << "gf01_r_14,gf02_r_14,gf03_r_14,gf04_r_14,gf05_r_14,gf06_r_14,gf07_r_14,gf08_r_14,gf09_r_14" << std::endl;
+
+  for (int i = 0; i <= nFolders; i++)
+  {
+    for (int i = 0; i <= nFolders; i++)
+    {
+      std::ostringstream oss;
+      oss << std::setw(3) << std::setfill('0') << i;
+      std::string folder = "bs" + oss.str();
+
+      std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/" + folder;
+      std::string originalCloudsFolder = "/media/thalisson/Seagate Expansion Drive/BD Faces/Bosphorus_Original_PCD/" + folder + "/";
+
+      std::cout << "Folder [" << folder << "]" << std::endl;
+
+      for (const auto & entry : fs::directory_iterator(landmarksPath))
+      {
+        std::string filename = entry.path();
+        std::string originalFilename = fs::path(filename).filename();
+        std::string originalCloudPath = originalCloudsFolder + originalFilename;
+
+        if (has_suffix(filename, ".pcd"))
+        {
+          myfile << originalFilename;
+
+          CloudXYZ::Ptr landmarkCloud(new CloudXYZ);
+          if (pcl::io::loadPCDFile(filename, *landmarkCloud) == -1)
+          {
+            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
+            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+            continue;
+          }
+
+          CloudXYZ::Ptr originalCloud(new CloudXYZ);
+
+          if (pcl::io::loadPCDFile(originalCloudPath, *originalCloud) == -1)
+          {
+            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
+            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+            continue;
+          }
+
+          pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+          kdtree.setInputCloud(originalCloud);
+
+          // K Neighbors
+          for (int k = 100; k <= 300; k+=50)
+          {
+            std::vector<int> pointIdxKNNSearch(k);
+            std::vector<float> pointKNNSquaredDistance(k);
+
+            if (kdtree.nearestKSearch(landmarkCloud->points[0], k, pointIdxKNNSearch, pointKNNSquaredDistance) <= 0)
+            {
+              myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
+              myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+              continue;
+            }
+
+            GeometricFeatures gf;
+            CloudXYZ::Ptr filteredCloud(new CloudXYZ);
+
+            pcl::copyPointCloud(*originalCloud, pointIdxKNNSearch, *filteredCloud);
+
+            Anisotropy::geometricFeatures(*filteredCloud, &gf);
+
+            myfile << Anisotropy::printGeometricFeatures(&gf);
+          }
+
+          // Radius
+          // for (int r = 10; r <= 14; r++)
+          // {
+          //   std::vector<int> pointIdxKNNSearch;
+          //   std::vector<float> pointKNNSquaredDistance;
+
+          //   if (kdtree.radiusSearch(landmarkCloud->points[0], r, pointIdxKNNSearch, pointKNNSquaredDistance) <= 0)
+          //   {
+          //     myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
+          //     myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+          //     continue;
+          //   }
+
+          //   GeometricFeatures gf;
+          //   CloudXYZ::Ptr filteredCloud(new CloudXYZ);
+
+          //   pcl::copyPointCloud(*originalCloud, pointIdxKNNSearch, *filteredCloud);
+
+          //   Anisotropy::geometricFeatures(*filteredCloud, &gf);
+
+          //   myfile << Anisotropy::printGeometricFeatures(&gf);
+          // }
+
+          myfile << std::endl;
+        }
+      }
+    }
+  }
+
+  myfile.close();
+}
+
+int main(int n, char **argv) {
+  // extractAnisotropy();
+  extractShapeIndexAndGaussianCurvature();
+
+  // if (n != 7) {
+  //   throw std::runtime_error("number of args insufficient: should be 7");
+  // }
+
+  // std::string filename = argv[1];
+  // std::string method = argv[2];
+  // float methodValue = std::stof(argv[3]);
+  // float x = std::stof(argv[4]);
+  // float y = std::stof(argv[5]);
+  // float z = std::stof(argv[6]);
+  // int index = -1;
+
+  // std::cout << x << " " << y << " " << z << std::endl;
+
+  // CloudXYZ::Ptr cloud(new CloudXYZ);
+
+  // if (pcl::io::loadPCDFile(filename, *cloud) == -1)
+  // {
+  //   throw std::runtime_error("Couldn't read PCD file");
+  // }
+
+  // std::cout << cloud->points.size() << std::endl;
+}
