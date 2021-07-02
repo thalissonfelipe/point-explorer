@@ -253,11 +253,12 @@ PointAnalysis process(CloudXYZ::Ptr &cloud, pcl::PointXYZ point, std::string met
   return pointAnalysis;
 }
 
-void extractShapeIndexAndGaussianCurvature() {
+void extractShapeIndexAndGaussianCurvature(std::string outputFilename) {
   const int nFolders = 104;
 
+  // std::ios_base::app (append mode)
   std::ofstream myfile;
-  myfile.open("data2.txt");
+  myfile.open(outputFilename);
 
   myfile << "cloud,individuo,";
   myfile << "radius_10_si,radius_10_cg,radius_11_si,radius_11_cf,radius_12_si,radius_12_cg,radius_13_si,radius_13_cg,radius_14_si,radius_14_cg,";
@@ -269,7 +270,7 @@ void extractShapeIndexAndGaussianCurvature() {
     oss << std::setw(3) << std::setfill('0') << i;
     std::string folder = "bs" + oss.str();
 
-    std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/" + folder;
+    std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/right-eye/" + folder;
     std::string originalCloudsFolder = "/media/thalisson/Seagate Expansion Drive/BD Faces/Bosphorus_Original_PCD/" + folder + "/";
 
     std::cout << "Folder [" << folder << "]" << std::endl;
@@ -332,71 +333,136 @@ void extractShapeIndexAndGaussianCurvature() {
   myfile.close();
 }
 
-void extractAnisotropy() {
+// void extractor(std::string outputFilename, std::string header, std::string null) {
+//   const int nFolders = 104;
+
+//   std::ofstream myfile;
+//   myfile.open(outputFilename);
+  
+//   myfile << header << std::endl;
+
+//   for (int i = 0; i <= nFolders; i++)
+//   {
+//     for (int i = 0; i <= nFolders; i++)
+//     {
+//       std::ostringstream oss;
+//       oss << std::setw(3) << std::setfill('0') << i;
+//       std::string folder = "bs" + oss.str();
+
+//       std::string landmarksCloudsFolder = "/home/thalisson/Documents/landmarks/landmarks/" + folder;
+//       std::string originalCloudsFolder = "/media/thalisson/Seagate Expansion Drive/BD Faces/Bosphorus_Original_PCD/" + folder + "/";
+
+//       std::cout << "Folder [" << folder << "]" << std::endl;
+
+//       for (const auto & entry : fs::directory_iterator(landmarksCloudsFolder))
+//       {
+//         std::string filename = entry.path();
+//         std::string originalFilename = fs::path(filename).filename();
+//         std::string originalCloudPath = originalCloudsFolder + originalFilename;
+
+//         if (has_suffix(filename, ".pcd"))
+//         {
+//           continue;
+//         }
+
+//         myfile << originalFilename;
+
+//         CloudXYZ::Ptr landmarkCloud(new CloudXYZ);
+//         if (pcl::io::loadPCDFile(filename, *landmarkCloud) == -1)
+//         {
+//           myfile << null << std::endl;
+//           continue;
+//         }
+
+//         CloudXYZ::Ptr originalCloud(new CloudXYZ);
+
+//         if (pcl::io::loadPCDFile(originalCloudPath, *originalCloud) == -1)
+//         {
+//           myfile << null << std::endl;
+//           continue;
+//         }
+
+        
+//       }
+//     }
+//   }
+
+//   myfile.close();
+// }
+
+// 0 - K neighbors
+// 1 - rRadius
+void extractAnisotropy(int method, std::string outputFilename) {
   const int nFolders = 104;
 
   std::ofstream myfile;
-  myfile.open("anisotropy_k_neighbors.txt");
-  // myfile.open("anisotropy_radius.txt");
+  myfile.open(outputFilename);
 
   myfile << "cloud,";
   // K neighbors
-  myfile << "gf01_k_100,gf02_k_100,gf03_k_100,gf04_k_100,gf05_k_100,gf06_k_100,gf07_k_100,gf08_k_100,gf09_k_100,";
-  myfile << "gf01_k_150,gf02_k_150,gf03_k_150,gf04_k_150,gf05_k_150,gf06_k_150,gf07_k_150,gf08_k_150,gf09_k_150,";
-  myfile << "gf01_k_200,gf02_k_200,gf03_k_200,gf04_k_200,gf05_k_200,gf06_k_200,gf07_k_200,gf08_k_200,gf09_k_200,";
-  myfile << "gf01_k_250,gf02_k_250,gf03_k_250,gf04_k_250,gf05_k_250,gf06_k_250,gf07_k_250,gf08_k_250,gf09_k_250,";
-  myfile << "gf01_k_300,gf02_k_300,gf03_k_300,gf04_k_300,gf05_k_300,gf06_k_300,gf07_k_300,gf08_k_300,gf09_k_300" << std::endl;
+  if (method == 0)
+  {
+    myfile << "gf01_k_100,gf02_k_100,gf03_k_100,gf04_k_100,gf05_k_100,gf06_k_100,gf07_k_100,gf08_k_100,gf09_k_100,";
+    myfile << "gf01_k_150,gf02_k_150,gf03_k_150,gf04_k_150,gf05_k_150,gf06_k_150,gf07_k_150,gf08_k_150,gf09_k_150,";
+    myfile << "gf01_k_200,gf02_k_200,gf03_k_200,gf04_k_200,gf05_k_200,gf06_k_200,gf07_k_200,gf08_k_200,gf09_k_200,";
+    myfile << "gf01_k_250,gf02_k_250,gf03_k_250,gf04_k_250,gf05_k_250,gf06_k_250,gf07_k_250,gf08_k_250,gf09_k_250,";
+    myfile << "gf01_k_300,gf02_k_300,gf03_k_300,gf04_k_300,gf05_k_300,gf06_k_300,gf07_k_300,gf08_k_300,gf09_k_300" << std::endl;
+  }
+  
   // Radius
-  // myfile << "gf01_r_10,gf02_r_10,gf03_r_10,gf04_r_10,gf05_r_10,gf06_r_10,gf07_r_10,gf08_r_10,gf09_r_10,";
-  // myfile << "gf01_r_11,gf02_r_11,gf03_r_11,gf04_r_11,gf05_r_11,gf06_r_11,gf07_r_11,gf08_r_11,gf09_r_11,";
-  // myfile << "gf01_r_12,gf02_r_12,gf03_r_12,gf04_r_12,gf05_r_12,gf06_r_12,gf07_r_12,gf08_r_12,gf09_r_12,";
-  // myfile << "gf01_r_13,gf02_r_13,gf03_r_13,gf04_r_13,gf05_r_13,gf06_r_13,gf07_r_13,gf08_r_13,gf09_r_13,";
-  // myfile << "gf01_r_14,gf02_r_14,gf03_r_14,gf04_r_14,gf05_r_14,gf06_r_14,gf07_r_14,gf08_r_14,gf09_r_14" << std::endl;
-
+  if (method == 1)
+  {
+    myfile << "gf01_r_10,gf02_r_10,gf03_r_10,gf04_r_10,gf05_r_10,gf06_r_10,gf07_r_10,gf08_r_10,gf09_r_10,";
+    myfile << "gf01_r_11,gf02_r_11,gf03_r_11,gf04_r_11,gf05_r_11,gf06_r_11,gf07_r_11,gf08_r_11,gf09_r_11,";
+    myfile << "gf01_r_12,gf02_r_12,gf03_r_12,gf04_r_12,gf05_r_12,gf06_r_12,gf07_r_12,gf08_r_12,gf09_r_12,";
+    myfile << "gf01_r_13,gf02_r_13,gf03_r_13,gf04_r_13,gf05_r_13,gf06_r_13,gf07_r_13,gf08_r_13,gf09_r_13,";
+    myfile << "gf01_r_14,gf02_r_14,gf03_r_14,gf04_r_14,gf05_r_14,gf06_r_14,gf07_r_14,gf08_r_14,gf09_r_14" << std::endl;
+  }
+  
   for (int i = 0; i <= nFolders; i++)
   {
-    for (int i = 0; i <= nFolders; i++)
+    std::ostringstream oss;
+    oss << std::setw(3) << std::setfill('0') << i;
+    std::string folder = "bs" + oss.str();
+
+    std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/right-eye/" + folder;
+    std::string originalCloudsFolder = "/media/thalisson/Seagate Expansion Drive/BD Faces/Bosphorus_Original_PCD/" + folder + "/";
+
+    std::cout << "Folder [" << folder << "]" << std::endl;
+
+    for (const auto & entry : fs::directory_iterator(landmarksPath))
     {
-      std::ostringstream oss;
-      oss << std::setw(3) << std::setfill('0') << i;
-      std::string folder = "bs" + oss.str();
+      std::string filename = entry.path();
+      std::string originalFilename = fs::path(filename).filename();
+      std::string originalCloudPath = originalCloudsFolder + originalFilename;
 
-      std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/" + folder;
-      std::string originalCloudsFolder = "/media/thalisson/Seagate Expansion Drive/BD Faces/Bosphorus_Original_PCD/" + folder + "/";
-
-      std::cout << "Folder [" << folder << "]" << std::endl;
-
-      for (const auto & entry : fs::directory_iterator(landmarksPath))
+      if (has_suffix(filename, ".pcd"))
       {
-        std::string filename = entry.path();
-        std::string originalFilename = fs::path(filename).filename();
-        std::string originalCloudPath = originalCloudsFolder + originalFilename;
+        myfile << originalFilename;
 
-        if (has_suffix(filename, ".pcd"))
+        CloudXYZ::Ptr landmarkCloud(new CloudXYZ);
+        if (pcl::io::loadPCDFile(filename, *landmarkCloud) == -1)
         {
-          myfile << originalFilename;
+          myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
+          myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+          continue;
+        }
 
-          CloudXYZ::Ptr landmarkCloud(new CloudXYZ);
-          if (pcl::io::loadPCDFile(filename, *landmarkCloud) == -1)
-          {
-            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
-            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
-            continue;
-          }
+        CloudXYZ::Ptr originalCloud(new CloudXYZ);
 
-          CloudXYZ::Ptr originalCloud(new CloudXYZ);
+        if (pcl::io::loadPCDFile(originalCloudPath, *originalCloud) == -1)
+        {
+          myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
+          myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+          continue;
+        }
 
-          if (pcl::io::loadPCDFile(originalCloudPath, *originalCloud) == -1)
-          {
-            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
-            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
-            continue;
-          }
+        pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+        kdtree.setInputCloud(originalCloud);
 
-          pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
-          kdtree.setInputCloud(originalCloud);
-
-          // K Neighbors
+        // K Neighbors
+        if (method == 0)
+        {
           for (int k = 100; k <= 300; k+=50)
           {
             std::vector<int> pointIdxKNNSearch(k);
@@ -419,31 +485,35 @@ void extractAnisotropy() {
             myfile << Anisotropy::printGeometricFeatures(&gf);
           }
 
-          // Radius
-          // for (int r = 10; r <= 14; r++)
-          // {
-          //   std::vector<int> pointIdxKNNSearch;
-          //   std::vector<float> pointKNNSquaredDistance;
-
-          //   if (kdtree.radiusSearch(landmarkCloud->points[0], r, pointIdxKNNSearch, pointKNNSquaredDistance) <= 0)
-          //   {
-          //     myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
-          //     myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
-          //     continue;
-          //   }
-
-          //   GeometricFeatures gf;
-          //   CloudXYZ::Ptr filteredCloud(new CloudXYZ);
-
-          //   pcl::copyPointCloud(*originalCloud, pointIdxKNNSearch, *filteredCloud);
-
-          //   Anisotropy::geometricFeatures(*filteredCloud, &gf);
-
-          //   myfile << Anisotropy::printGeometricFeatures(&gf);
-          // }
-
           myfile << std::endl;
+
+          continue;
         }
+
+        // Radius
+        for (int r = 10; r <= 14; r++)
+        {
+          std::vector<int> pointIdxKNNSearch;
+          std::vector<float> pointKNNSquaredDistance;
+
+          if (kdtree.radiusSearch(landmarkCloud->points[0], r, pointIdxKNNSearch, pointKNNSquaredDistance) <= 0)
+          {
+            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
+            myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+            continue;
+          }
+
+          GeometricFeatures gf;
+          CloudXYZ::Ptr filteredCloud(new CloudXYZ);
+
+          pcl::copyPointCloud(*originalCloud, pointIdxKNNSearch, *filteredCloud);
+
+          Anisotropy::geometricFeatures(*filteredCloud, &gf);
+
+          myfile << Anisotropy::printGeometricFeatures(&gf);
+        }
+
+        myfile << std::endl;
       }
     }
   }
@@ -452,8 +522,12 @@ void extractAnisotropy() {
 }
 
 int main(int n, char **argv) {
-  // extractAnisotropy();
-  extractShapeIndexAndGaussianCurvature();
+  // std::cout << "Extracting Anistropy for K neighbors" << std::endl;
+  // extractAnisotropy(0, "anisotropy_k_neighbors_re.txt");
+  // std::cout << "Extracting Anistropy for radius" << std::endl;
+  // extractAnisotropy(1, "anisotropy_radius_re.txt");
+  std::cout << "Extracting shape index and gaussian curvature" << std::endl;
+  extractShapeIndexAndGaussianCurvature("output.txt");
 
   // if (n != 7) {
   //   throw std::runtime_error("number of args insufficient: should be 7");
