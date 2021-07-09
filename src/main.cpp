@@ -253,7 +253,7 @@ PointAnalysis process(CloudXYZ::Ptr &cloud, pcl::PointXYZ point, std::string met
   return pointAnalysis;
 }
 
-void extractShapeIndexAndGaussianCurvature(std::string outputFilename) {
+void extractShapeIndexAndGaussianCurvature(std::string outputFilename, std::string type) {
   const int nFolders = 104;
 
   // std::ios_base::app (append mode)
@@ -270,7 +270,7 @@ void extractShapeIndexAndGaussianCurvature(std::string outputFilename) {
     oss << std::setw(3) << std::setfill('0') << i;
     std::string folder = "bs" + oss.str();
 
-    std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/right-eye/" + folder;
+    std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/" + type + "/" + folder;
     std::string originalCloudsFolder = "/media/thalisson/Seagate Expansion Drive/BD Faces/Bosphorus_Original_PCD/" + folder + "/";
 
     std::cout << "Folder [" << folder << "]" << std::endl;
@@ -333,66 +333,9 @@ void extractShapeIndexAndGaussianCurvature(std::string outputFilename) {
   myfile.close();
 }
 
-// void extractor(std::string outputFilename, std::string header, std::string null) {
-//   const int nFolders = 104;
-
-//   std::ofstream myfile;
-//   myfile.open(outputFilename);
-  
-//   myfile << header << std::endl;
-
-//   for (int i = 0; i <= nFolders; i++)
-//   {
-//     for (int i = 0; i <= nFolders; i++)
-//     {
-//       std::ostringstream oss;
-//       oss << std::setw(3) << std::setfill('0') << i;
-//       std::string folder = "bs" + oss.str();
-
-//       std::string landmarksCloudsFolder = "/home/thalisson/Documents/landmarks/landmarks/" + folder;
-//       std::string originalCloudsFolder = "/media/thalisson/Seagate Expansion Drive/BD Faces/Bosphorus_Original_PCD/" + folder + "/";
-
-//       std::cout << "Folder [" << folder << "]" << std::endl;
-
-//       for (const auto & entry : fs::directory_iterator(landmarksCloudsFolder))
-//       {
-//         std::string filename = entry.path();
-//         std::string originalFilename = fs::path(filename).filename();
-//         std::string originalCloudPath = originalCloudsFolder + originalFilename;
-
-//         if (has_suffix(filename, ".pcd"))
-//         {
-//           continue;
-//         }
-
-//         myfile << originalFilename;
-
-//         CloudXYZ::Ptr landmarkCloud(new CloudXYZ);
-//         if (pcl::io::loadPCDFile(filename, *landmarkCloud) == -1)
-//         {
-//           myfile << null << std::endl;
-//           continue;
-//         }
-
-//         CloudXYZ::Ptr originalCloud(new CloudXYZ);
-
-//         if (pcl::io::loadPCDFile(originalCloudPath, *originalCloud) == -1)
-//         {
-//           myfile << null << std::endl;
-//           continue;
-//         }
-
-        
-//       }
-//     }
-//   }
-
-//   myfile.close();
-// }
-
 // 0 - K neighbors
 // 1 - rRadius
-void extractAnisotropy(int method, std::string outputFilename) {
+void extractAnisotropy(int method, std::string outputFilename, std::string type) {
   const int nFolders = 104;
 
   std::ofstream myfile;
@@ -413,10 +356,10 @@ void extractAnisotropy(int method, std::string outputFilename) {
   if (method == 1)
   {
     myfile << "gf01_r_10,gf02_r_10,gf03_r_10,gf04_r_10,gf05_r_10,gf06_r_10,gf07_r_10,gf08_r_10,gf09_r_10,";
-    myfile << "gf01_r_11,gf02_r_11,gf03_r_11,gf04_r_11,gf05_r_11,gf06_r_11,gf07_r_11,gf08_r_11,gf09_r_11,";
-    myfile << "gf01_r_12,gf02_r_12,gf03_r_12,gf04_r_12,gf05_r_12,gf06_r_12,gf07_r_12,gf08_r_12,gf09_r_12,";
-    myfile << "gf01_r_13,gf02_r_13,gf03_r_13,gf04_r_13,gf05_r_13,gf06_r_13,gf07_r_13,gf08_r_13,gf09_r_13,";
-    myfile << "gf01_r_14,gf02_r_14,gf03_r_14,gf04_r_14,gf05_r_14,gf06_r_14,gf07_r_14,gf08_r_14,gf09_r_14" << std::endl;
+    myfile << "gf01_r_15,gf02_r_15,gf03_r_15,gf04_r_15,gf05_r_15,gf06_r_15,gf07_r_15,gf08_r_15,gf09_r_15,";
+    myfile << "gf01_r_20,gf02_r_20,gf03_r_20,gf04_r_20,gf05_r_20,gf06_r_20,gf07_r_20,gf08_r_20,gf09_r_20,";
+    myfile << "gf01_r_25,gf02_r_25,gf03_r_25,gf04_r_25,gf05_r_25,gf06_r_25,gf07_r_25,gf08_r_25,gf09_r_25,";
+    myfile << "gf01_r_30,gf02_r_30,gf03_r_30,gf04_r_30,gf05_r_30,gf06_r_30,gf07_r_30,gf08_r_30,gf09_r_30" << std::endl;
   }
   
   for (int i = 0; i <= nFolders; i++)
@@ -425,7 +368,7 @@ void extractAnisotropy(int method, std::string outputFilename) {
     oss << std::setw(3) << std::setfill('0') << i;
     std::string folder = "bs" + oss.str();
 
-    std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/right-eye/" + folder;
+    std::string landmarksPath = "/home/thalisson/Documents/landmarks/landmarks/" + type + "/" + folder;
     std::string originalCloudsFolder = "/media/thalisson/Seagate Expansion Drive/BD Faces/Bosphorus_Original_PCD/" + folder + "/";
 
     std::cout << "Folder [" << folder << "]" << std::endl;
@@ -491,7 +434,7 @@ void extractAnisotropy(int method, std::string outputFilename) {
         }
 
         // Radius
-        for (int r = 10; r <= 14; r++)
+        for (int r = 10; r <= 30; r+=5)
         {
           std::vector<int> pointIdxKNNSearch;
           std::vector<float> pointKNNSquaredDistance;
@@ -524,10 +467,14 @@ void extractAnisotropy(int method, std::string outputFilename) {
 int main(int n, char **argv) {
   // std::cout << "Extracting Anistropy for K neighbors" << std::endl;
   // extractAnisotropy(0, "anisotropy_k_neighbors_re.txt");
-  // std::cout << "Extracting Anistropy for radius" << std::endl;
-  // extractAnisotropy(1, "anisotropy_radius_re.txt");
-  std::cout << "Extracting shape index and gaussian curvature" << std::endl;
-  extractShapeIndexAndGaussianCurvature("output.txt");
+  std::cout << "Extracting Covariance Features - Left eye" << std::endl;
+  extractAnisotropy(1, "covariance_features_left_eye_v2.txt", "left-eye");
+  std::cout << "Extracting Covariance Features - Right eye" << std::endl;
+  extractAnisotropy(1, "covariance_features_right_eye_v2.txt", "right-eye");
+  std::cout << "Extracting Covariance Features - Nosetip" << std::endl;
+  extractAnisotropy(1, "covariance_features_nose_tip_v2.txt", "nose-tip");
+  // std::cout << "Extracting shape index and gaussian curvature" << std::endl;
+  // extractShapeIndexAndGaussianCurvature("data_nose_tip.txt", "nose-tip");
 
   // if (n != 7) {
   //   throw std::runtime_error("number of args insufficient: should be 7");
