@@ -14,8 +14,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build")
 
 add_executable (
   point_explorer 
-  Anisotropy.cpp
-  ../include/Anisotropy.h
+  GeometricFeatures.cpp
+  Computation.cpp
+  ../include/GeometricFeatures.h
+  ../include/Computation.h
   main.cpp
   )
 target_link_libraries (point_explorer ${PCL_LIBRARIES})
