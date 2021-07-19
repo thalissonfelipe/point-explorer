@@ -1,5 +1,6 @@
 #include <string>
 #include <thread>
+#include <math.h>
 
 #include "../include/Computation.h"
 #include "../include/GeometricFeatures.h"
@@ -185,9 +186,21 @@ PointAnalysis Computation::getPointAnalysis(
 
     pcl::Normal normal = normalCloud->points[index];
     pcl::PrincipalCurvatures principalCurvatures = principalCurvaturesCloud->points[index];
-    float shapeIndex = shapeIndexes[index];
-    float gaussianCurvature = principalCurvatures.pc1 * principalCurvatures.pc2;
+    float k1 = principalCurvatures.pc1;
+    float k2 = principalCurvatures.pc2;
 
-    PointAnalysis pa = {normal, principalCurvatures, shapeIndex, gaussianCurvature};
+    float shapeIndex = shapeIndexes[index];
+    float gaussianCurvature = k1 * k2;
+    float meanCurvature = (k1 + k2) / 2;
+    float curvedness = sqrt(((k1 * k1) + (k2 * k2)) / 2);
+    float principalCurvatureRatio;
+
+    if (k2 == 0) {
+        principalCurvatureRatio = 0;
+    } else {
+        principalCurvatureRatio = k1 / k2;
+    }
+
+    PointAnalysis pa = {normal, principalCurvatures, shapeIndex, gaussianCurvature, meanCurvature, curvedness, principalCurvatureRatio};
     return pa;
 }

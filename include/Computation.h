@@ -19,6 +19,9 @@ struct PointAnalysis
     pcl::PrincipalCurvatures principalCurvatures;
     float shapeIndex;
     float gaussianCurvature;
+    float meanCurvature;
+    float curvedness;
+    float principalCurvatureRatio;
 };
 
 class Computation {

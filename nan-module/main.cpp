@@ -138,6 +138,9 @@ NAN_METHOD(GetPointAnalysis)
         pointAnalysisV8Object->Set(Nan::New("normal").ToLocalChecked(), normalV8Object);
         pointAnalysisV8Object->Set(Nan::New("principal_curvatures").ToLocalChecked(), principalCurvaturesV8Object);
         pointAnalysisV8Object->Set(Nan::New("gaussian_curvature").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.gaussianCurvature));
+        pointAnalysisV8Object->Set(Nan::New("mean_curvature").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.meanCurvature));
+        pointAnalysisV8Object->Set(Nan::New("curvedness").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.curvedness));
+        pointAnalysisV8Object->Set(Nan::New("principal_curvature_ratio").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.principalCurvatureRatio));
         pointAnalysisV8Object->Set(Nan::New("shape_index").ToLocalChecked(), Nan::New<v8::Number>(pointAnalysis.shapeIndex));
         pointAnalysisV8Object->Set(Nan::New("geometric_features").ToLocalChecked(), gfV8Object);
         pointAnalysisV8Object->Set(Nan::New("neighborhood").ToLocalChecked(), parseCloudToV8Array(gfCloud));
