@@ -68,8 +68,9 @@ void extractShapeIndexAndGaussianCurvature(std::string outputFilename, std::stri
     myfile.open(outputFilename);
 
     myfile << "cloud,individuo,";
-    myfile << "radius_10_si,radius_10_cg,radius_11_si,radius_11_cf,radius_12_si,radius_12_cg,radius_13_si,radius_13_cg,radius_14_si,radius_14_cg,";
-    myfile << "k_100_si,k_100_cg,k_150_si,k_150_cg,k_200_si,k_200_cg,k_250_si,k_250_cg,k_300_si,k_300_cg" << std::endl;
+    // myfile << "radius_10_si,radius_10_cg,radius_11_si,radius_11_cf,radius_12_si,radius_12_cg,radius_13_si,radius_13_cg,radius_14_si,radius_14_cg,";
+    // myfile << "k_100_si,k_100_cg,k_150_si,k_150_cg,k_200_si,k_200_cg,k_250_si,k_250_cg,k_300_si,k_300_cg" << std::endl;
+    myfile << "radius_10_si,radius_10_cg,radius_15_si,radius_15_cg,radius_20_si,radius_20_cg,radius_25_si,radius_25_cg,radius_30_si,radius_30_cg" << std::endl;
 
     for (int i = 0; i <= nFolders; i++)
     {
@@ -95,7 +96,7 @@ void extractShapeIndexAndGaussianCurvature(std::string outputFilename, std::stri
                 CloudXYZ::Ptr cloud(new CloudXYZ);
                 if (pcl::io::loadPCDFile(filename, *cloud) == -1)
                 {
-                    myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+                    myfile << ",null,null,null,null,null,null,null,null,null,null" << std::endl;
                     continue;
                 }
 
@@ -103,13 +104,13 @@ void extractShapeIndexAndGaussianCurvature(std::string outputFilename, std::stri
 
                 if (pcl::io::loadPCDFile(originalCloudPath, *originalCloud) == -1)
                 {
-                    myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null" << std::endl;
+                    myfile << ",null,null,null,null,null,null,null,null,null,null" << std::endl;
                     continue;
                 }
 
                 // radius
-                bool canContinue = true;
-                for (int j = 10; j <= 14; j++) {
+                // bool canContinue = true;
+                for (int j = 10; j <= 30; j+=5) {
                     PointAnalysis pa = process(originalCloud, cloud->points[0], "radius", j);
 
                     if (pa.shapeIndex != -10)
@@ -117,20 +118,21 @@ void extractShapeIndexAndGaussianCurvature(std::string outputFilename, std::stri
                         myfile << "," << pa.shapeIndex << "," << pa.gaussianCurvature;
                     } else {
                         // point not found
-                        myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
-                        canContinue = false;
+                        // myfile << ",null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null";
+                        // canContinue = false;
+                        myfile << ",null,null,null,null,null,null,null,null,null,null";
                         break;
                     }
                 }
 
                 // neighbors
-                if (canContinue)
-                {
-                    for (int k = 100; k <= 300; k+=50) {
-                        PointAnalysis pa = process(originalCloud, cloud->points[0], "k", k);
-                        myfile << "," << pa.shapeIndex << "," << pa.gaussianCurvature;
-                    }
-                }
+                // if (canContinue)
+                // {
+                //     for (int k = 100; k <= 300; k+=50) {
+                //         PointAnalysis pa = process(originalCloud, cloud->points[0], "k", k);
+                //         myfile << "," << pa.shapeIndex << "," << pa.gaussianCurvature;
+                //     }
+                // }
 
                 myfile << std::endl;
             }
@@ -280,8 +282,12 @@ int main(int n, char **argv) {
 //   extractGeometricFeatures(1, "covariance_features_right_eye_v2.txt", "right-eye");
 //   std::cout << "Extracting Covariance Features - Nosetip" << std::endl;
 //   extractGeometricFeatures(1, "covariance_features_nose_tip_v2.txt", "nose-tip");
+    // std::cout << "Extracting shape index and gaussian curvature" << std::endl;
+    // extractShapeIndexAndGaussianCurvature("left_inner_eye.txt", "left-eye");
     std::cout << "Extracting shape index and gaussian curvature" << std::endl;
-    extractShapeIndexAndGaussianCurvature("testeeeeeeeeeeeeee.txt", "nose-tip");
+    extractShapeIndexAndGaussianCurvature("right_inner_eye.txt", "right-eye");
+    std::cout << "Extracting shape index and gaussian curvature" << std::endl;
+    extractShapeIndexAndGaussianCurvature("nose_tip.txt", "nose-tip");
 
   // if (n != 7) {
   //   throw std::runtime_error("number of args insufficient: should be 7");

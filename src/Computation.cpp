@@ -1,4 +1,5 @@
 #include <string>
+#include <thread>
 
 #include "../include/Computation.h"
 #include "../include/GeometricFeatures.h"
@@ -10,6 +11,7 @@
 #include <pcl/common/transforms.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/features/normal_3d.h>
+#include <pcl/features/normal_3d_omp.h>
 #include <pcl/features/principal_curvatures.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/filter.h>
@@ -21,11 +23,15 @@ void Computation::normalComputation(
     pcl::PointCloud<pcl::Normal>::Ptr outputNormalCloud
 )
 {
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normalEstimation;
+    pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> normalEstimation;
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
 
     normalEstimation.setInputCloud(inputCloud);
     normalEstimation.setSearchMethod(tree);
+
+    int nr_cores = std::thread::hardware_concurrency();
+
+    normalEstimation.setNumberOfThreads(nr_cores);
 
     if (radiusOrKSearch.compare("radius") == 0)
     {
