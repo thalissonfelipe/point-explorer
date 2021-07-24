@@ -65,14 +65,14 @@ void extractShapeIndexAndGaussianCurvature(std::string outputFilename, std::stri
 
     // std::ios_base::app (append mode)
     std::ofstream myfile;
-    myfile.open(outputFilename);
+    myfile.open(outputFilename, std::ios_base::app);
 
-    myfile << "cloud,individuo,";
+    // myfile << "cloud,individuo,";
     // myfile << "radius_10_si,radius_10_cg,radius_11_si,radius_11_cf,radius_12_si,radius_12_cg,radius_13_si,radius_13_cg,radius_14_si,radius_14_cg,";
     // myfile << "k_100_si,k_100_cg,k_150_si,k_150_cg,k_200_si,k_200_cg,k_250_si,k_250_cg,k_300_si,k_300_cg" << std::endl;
     myfile << "radius_10_si,radius_10_cg,radius_15_si,radius_15_cg,radius_20_si,radius_20_cg,radius_25_si,radius_25_cg,radius_30_si,radius_30_cg" << std::endl;
 
-    for (int i = 0; i <= nFolders; i++)
+    for (int i = 57; i <= 57; i++)
     {
         std::ostringstream oss;
         oss << std::setw(3) << std::setfill('0') << i;
@@ -260,9 +260,15 @@ void extractGeometricFeatures(int method, std::string outputFilename, std::strin
 
                     pcl::copyPointCloud(*originalCloud, pointIdxKNNSearch, *filteredCloud);
 
-                    GeometricFeaturesComputation::geometricFeatures(*filteredCloud, &gf);
-
-                    myfile << GeometricFeaturesComputation::printGeometricFeatures(&gf);
+                    if (GeometricFeaturesComputation::geometricFeatures(*filteredCloud, &gf))
+                    {
+                        myfile << GeometricFeaturesComputation::printGeometricFeatures(&gf);
+                    }
+                    else
+                    {
+                        myfile << ",null,null,null,null,null,null,null,null,null";
+                        continue;
+                    }
                 }
 
                 myfile << std::endl;
@@ -274,20 +280,18 @@ void extractGeometricFeatures(int method, std::string outputFilename, std::strin
 }
 
 int main(int n, char **argv) {
-  // std::cout << "Extracting Anistropy for K neighbors" << std::endl;
-  // extractGeometricFeatures(0, "anisotropy_k_neighbors_re.txt");
 //   std::cout << "Extracting Covariance Features - Left eye" << std::endl;
-//   extractGeometricFeatures(1, "testeeeeeeeeee.txt", "left-eye");
-//   std::cout << "Extracting Covariance Features - Right eye" << std::endl;
-//   extractGeometricFeatures(1, "covariance_features_right_eye_v2.txt", "right-eye");
-//   std::cout << "Extracting Covariance Features - Nosetip" << std::endl;
-//   extractGeometricFeatures(1, "covariance_features_nose_tip_v2.txt", "nose-tip");
+//   extractGeometricFeatures(1, "covariance_features_left_eye_10_30.txt", "left-eye");
+  std::cout << "Extracting Covariance Features - Right eye" << std::endl;
+  extractGeometricFeatures(1, "covariance_features_right_eye_10_30.txt", "right-eye");
+  std::cout << "Extracting Covariance Features - Nosetip" << std::endl;
+  extractGeometricFeatures(1, "covariance_features_nose_tip_10_30.txt", "nose-tip");
     // std::cout << "Extracting shape index and gaussian curvature" << std::endl;
     // extractShapeIndexAndGaussianCurvature("left_inner_eye.txt", "left-eye");
-    std::cout << "Extracting shape index and gaussian curvature" << std::endl;
-    extractShapeIndexAndGaussianCurvature("right_inner_eye.txt", "right-eye");
-    std::cout << "Extracting shape index and gaussian curvature" << std::endl;
-    extractShapeIndexAndGaussianCurvature("nose_tip.txt", "nose-tip");
+    // std::cout << "Extracting shape index and gaussian curvature" << std::endl;
+    // extractShapeIndexAndGaussianCurvature("right_inner_eye.txt", "right-eye");
+    // std::cout << "Extracting shape index and gaussian curvature" << std::endl;
+    // extractShapeIndexAndGaussianCurvature("nose_tip.txt", "nose-tip");
 
   // if (n != 7) {
   //   throw std::runtime_error("number of args insufficient: should be 7");

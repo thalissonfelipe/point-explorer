@@ -10,6 +10,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 link_libraries(stdc++fs)
 
+set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build")
 
 add_executable (

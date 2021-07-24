@@ -36,7 +36,7 @@ struct GeometricFeatures {
 
 class GeometricFeaturesComputation {
 public:
-    void static geometricFeatures(pcl::PointCloud<pcl::PointXYZ> cloud_in, GeometricFeatures* gf);
+    bool static geometricFeatures(pcl::PointCloud<pcl::PointXYZ> cloud_in, GeometricFeatures* gf);
     std::string static printGeometricFeatures(GeometricFeatures* gf);
 };
 

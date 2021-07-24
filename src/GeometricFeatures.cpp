@@ -1,11 +1,16 @@
 #include <string>
+#include <cmath>
 
 #include <pcl/point_cloud.h>
 
 #include "../include/GeometricFeatures.h"
 
-void GeometricFeaturesComputation::geometricFeatures(pcl::PointCloud<pcl::PointXYZ> cloud_in, GeometricFeatures* gf)
+bool GeometricFeaturesComputation::geometricFeatures(pcl::PointCloud<pcl::PointXYZ> cloud_in, GeometricFeatures* gf)
 {
+	if (cloud_in.points.size() < 3) {
+		return false;
+	}
+
 	pcl::PCA<pcl::PointXYZ> pca;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::copyPointCloud(cloud_in, *cloud);
@@ -17,8 +22,8 @@ void GeometricFeaturesComputation::geometricFeatures(pcl::PointCloud<pcl::PointX
 	// Sum
 	gf->gf01 = evCloud.sum();
 
-	// Omnivariance : Dá sempre 1
-	gf->gf02 = pow(evCloud.prod(),1/3);
+	// Omnivariance
+	gf->gf02 = pow(evCloud.prod(), (1.0/3.0));
 
 	// Eigenentropy
 	gf->gf03 = -evCloud[0]*log(evCloud[0]) -evCloud[1]*log(evCloud[1]) -evCloud[2]*log(evCloud[2]);
@@ -40,6 +45,8 @@ void GeometricFeaturesComputation::geometricFeatures(pcl::PointCloud<pcl::PointX
 
 	// Verticality
 	gf->gf09 = 1 -abs(v3.dot(eigen_vectors.col(2)));
+
+	return true;
 }
 
 std::string GeometricFeaturesComputation::printGeometricFeatures(GeometricFeatures* gf)
