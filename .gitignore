@@ -1,5 +1,6 @@
 node_modules
 build
+src/build
 .vscode
 package-lock.json
 
@@ -44,3 +45,5 @@ package-lock.json
 **/*.cbp
 **/CMakeScripts
 **/compile_commands.json
+
+**/*.pcd
