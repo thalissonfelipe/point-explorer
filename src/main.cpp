@@ -22,7 +22,7 @@ bool has_suffix(const std::string &str, const std::string &suffix)
 PointAnalysis process(CloudXYZ::Ptr &cloud, pcl::PointXYZ point, std::string method, float methodValue)
 {
     CloudXYZ::Ptr filteredCloud(new CloudXYZ);
-    
+
     // Removing NaNs
     std::vector<int> indices;
     pcl::removeNaNFromPointCloud(*cloud, *filteredCloud, indices);
@@ -47,7 +47,7 @@ PointAnalysis process(CloudXYZ::Ptr &cloud, pcl::PointXYZ point, std::string met
 
     std::vector<int> notNaNIndicesOfShapeIndexes;
     std::vector<float> shapeIndexes;
-    
+
     Computation::shapeIndexComputation(principalCurvaturesCloud, shapeIndexes, notNaNIndicesOfShapeIndexes);
     if (notNaNIndicesOfShapeIndexes.size() != filteredCloud->points.size() || notNaNIndicesOfShapeIndexes.size() != principalCurvaturesCloud->points.size())
     {
@@ -142,8 +142,8 @@ void extractShapeIndexAndGaussianCurvature(std::string outputFilename, std::stri
     myfile.close();
 }
 
-// 0 - K neighbors
-// 1 - Radius
+// method 0 - K neighbors
+// method 1 - Radius
 void extractGeometricFeatures(int method, std::string outputFilename, std::string type) {
     const int nFolders = 104;
 
@@ -160,7 +160,7 @@ void extractGeometricFeatures(int method, std::string outputFilename, std::strin
         myfile << "gf01_k_250,gf02_k_250,gf03_k_250,gf04_k_250,gf05_k_250,gf06_k_250,gf07_k_250,gf08_k_250,gf09_k_250,";
         myfile << "gf01_k_300,gf02_k_300,gf03_k_300,gf04_k_300,gf05_k_300,gf06_k_300,gf07_k_300,gf08_k_300,gf09_k_300" << std::endl;
     }
-    
+
     // Radius
     if (method == 1)
     {
@@ -170,7 +170,7 @@ void extractGeometricFeatures(int method, std::string outputFilename, std::strin
         myfile << "gf01_r_25,gf02_r_25,gf03_r_25,gf04_r_25,gf05_r_25,gf06_r_25,gf07_r_25,gf08_r_25,gf09_r_25,";
         myfile << "gf01_r_30,gf02_r_30,gf03_r_30,gf04_r_30,gf05_r_30,gf06_r_30,gf07_r_30,gf08_r_30,gf09_r_30" << std::endl;
     }
-    
+
     for (int i = 0; i <= nFolders; i++)
     {
         std::ostringstream oss;
@@ -279,40 +279,12 @@ void extractGeometricFeatures(int method, std::string outputFilename, std::strin
     myfile.close();
 }
 
+// See README.md to see details on how use this algorithm.
 int main(int n, char **argv) {
-//   std::cout << "Extracting Covariance Features - Left eye" << std::endl;
-//   extractGeometricFeatures(1, "covariance_features_left_eye_10_30.txt", "left-eye");
-  std::cout << "Extracting Covariance Features - Right eye" << std::endl;
-  extractGeometricFeatures(1, "covariance_features_right_eye_10_30.txt", "right-eye");
-  std::cout << "Extracting Covariance Features - Nosetip" << std::endl;
-  extractGeometricFeatures(1, "covariance_features_nose_tip_10_30.txt", "nose-tip");
-    // std::cout << "Extracting shape index and gaussian curvature" << std::endl;
-    // extractShapeIndexAndGaussianCurvature("left_inner_eye.txt", "left-eye");
-    // std::cout << "Extracting shape index and gaussian curvature" << std::endl;
-    // extractShapeIndexAndGaussianCurvature("right_inner_eye.txt", "right-eye");
-    // std::cout << "Extracting shape index and gaussian curvature" << std::endl;
-    // extractShapeIndexAndGaussianCurvature("nose_tip.txt", "nose-tip");
-
-  // if (n != 7) {
-  //   throw std::runtime_error("number of args insufficient: should be 7");
-  // }
-
-  // std::string filename = argv[1];
-  // std::string method = argv[2];
-  // float methodValue = std::stof(argv[3]);
-  // float x = std::stof(argv[4]);
-  // float y = std::stof(argv[5]);
-  // float z = std::stof(argv[6]);
-  // int index = -1;
-
-  // std::cout << x << " " << y << " " << z << std::endl;
-
-  // CloudXYZ::Ptr cloud(new CloudXYZ);
-
-  // if (pcl::io::loadPCDFile(filename, *cloud) == -1)
-  // {
-  //   throw std::runtime_error("Couldn't read PCD file");
-  // }
-
-  // std::cout << cloud->points.size() << std::endl;
+    std::cout << "Extracting Covariance Features - Left eye" << std::endl;
+    extractGeometricFeatures(1, "covariance_features_left_eye_10_30.txt", "left-eye");
+    std::cout << "Extracting Covariance Features - Outer Right eye" << std::endl;
+    extractGeometricFeatures(1, "covariance_features_outer_right_eye_10_30.txt", "outer-right-eye");
+    std::cout << "Extracting Covariance Features - Outer Left eye" << std::endl;
+    extractGeometricFeatures(1, "covariance_features_outer_left_eye_10_30.txt", "outer-left-eye");
 }
